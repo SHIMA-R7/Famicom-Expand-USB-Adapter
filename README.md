@@ -75,7 +75,7 @@ Arduino Nano(信号読み取り) + Raspberry Pi Pico(CircuitPython, USB HID出�
 - 今回の開発では主にClaudeを使っています。(要所要所の精査とか、雑用とかはGeminiやGPTも使ってる)途中で無料版のトークン制限にげんなりして課金しましたが、ClaudeCodeはいいですね、感動した。(周回遅れ)このレポジトリもClaudeがアップしてくれました。
 - 検証とかはほぼほぼしてないです。コードが読めないので。基本的に体当たり検証です。
 - 多分やろうと思えばPicoだけでもキーボードは使えます。ただ光線銃やその他周辺機器が必ずしもロジック電圧が合うとは限らないので、汎用性を重視してファミコンと同じ5VロジックのNanoをかましています。
-- いろいろ質問あれば[https://x.com/R_7_Rocket]まで
+- 問い合わせ先→[https://x.com/R_7_Rocket]
 
 ## 参考文献
 [https://www.nesdev.org/wiki/Family_BASIC_Keyboard]
