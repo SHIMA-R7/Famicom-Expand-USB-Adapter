@@ -1,0 +1,110 @@
+<svg viewBox="0 0 1500 1000" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+  <style>
+    .box { fill: #ffffff; stroke: #333333; stroke-width: 2; }
+    .mcu { fill: #eef4ff; stroke: #2c5aa0; stroke-width: 2; }
+    .conn { fill: #fff7e6; stroke: #a0662c; stroke-width: 2; }
+    .lbl { font-size: 14px; fill: #111111; }
+    .lbl-b { font-size: 15px; fill: #111111; font-weight: bold; }
+    .pin { font-size: 12px; fill: #333333; }
+    .wire { stroke: #444444; stroke-width: 1.5; fill: none; }
+    .wire-5v { stroke: #c0392b; stroke-width: 1.5; fill: none; }
+    .wire-gnd { stroke: #555555; stroke-width: 1.5; fill: none; }
+    .note { font-size: 12px; fill: #555555; font-style: italic; }
+    .title { font-size: 20px; fill: #111111; font-weight: bold; }
+  </style>
+
+  <text x="20" y="30" class="title">Famicom Keyboard / Zapper to USB HID Adapter - Wiring Diagram</text>
+
+  <!-- DA15 connector -->
+  <rect x="20" y="90" width="180" height="420" class="conn" rx="6"/>
+  <text x="35" y="115" class="lbl-b">Famicom Expansion</text>
+  <text x="35" y="132" class="lbl-b">Port (DA-15)</text>
+  <text x="35" y="160" class="pin">1  GND</text>
+  <text x="35" y="182" class="pin">2  (unused)</text>
+  <text x="35" y="204" class="pin">3  (unused)</text>
+  <text x="35" y="226" class="pin">4  KB D4 / Zapper TRIGGER</text>
+  <text x="35" y="248" class="pin">5  KB D3 / Zapper SENSOR</text>
+  <text x="35" y="270" class="pin">6  KB D2</text>
+  <text x="35" y="292" class="pin">7  KB D1</text>
+  <text x="35" y="314" class="pin">9  /OE2 (unused)</text>
+  <text x="35" y="336" class="pin">10 OUT2</text>
+  <text x="35" y="358" class="pin">11 OUT1</text>
+  <text x="35" y="380" class="pin">12 OUT0</text>
+  <text x="35" y="402" class="pin">14 /OE1 (unused)</text>
+  <text x="35" y="424" class="pin">15 +5V</text>
+  <text x="35" y="460" class="note">Keyboard and Zapper</text>
+  <text x="35" y="476" class="note">share pins 4/5 -</text>
+  <text x="35" y="492" class="note">connect only one at a time</text>
+
+  <!-- Nano -->
+  <rect x="300" y="60" width="220" height="480" class="mcu" rx="6"/>
+  <text x="315" y="85" class="lbl-b">Arduino Nano (5V)</text>
+  <text x="315" y="110" class="pin">D5  -&gt; DA15 pin 12 (OUT0)</text>
+  <text x="315" y="130" class="pin">D6  -&gt; DA15 pin 11 (OUT1)</text>
+  <text x="315" y="150" class="pin">D7  -&gt; DA15 pin 10 (OUT2)</text>
+  <text x="315" y="170" class="pin">D8  -&gt; DA15 pin 7  (KB D1)</text>
+  <text x="315" y="190" class="pin">D9  -&gt; DA15 pin 6  (KB D2)</text>
+  <text x="315" y="210" class="pin">D10 -&gt; DA15 pin 5  (KB D3 / Zapper SENSOR)</text>
+  <text x="315" y="230" class="pin">D11 -&gt; DA15 pin 4  (KB D4 / Zapper TRIGGER)</text>
+  <text x="315" y="250" class="pin">D12 -&gt; DA15 pin 9  (unused)</text>
+  <text x="315" y="270" class="pin">D13 -&gt; DA15 pin 14 (unused)</text>
+  <text x="315" y="300" class="pin">D2 (RX, SoftwareSerial) &lt;- Pico GP0 (TX)</text>
+  <text x="315" y="320" class="pin">D3 (TX, SoftwareSerial) -&gt; divider -&gt; Pico GP1 (RX)</text>
+  <text x="315" y="350" class="pin">5V  -&gt; DA15 pin 15</text>
+  <text x="315" y="370" class="pin">GND -&gt; DA15 pin 1, common GND</text>
+  <text x="315" y="400" class="note">UART 9600bps, 1 byte/event</text>
+  <text x="315" y="418" class="note">bit7 = press/release</text>
+  <text x="315" y="436" class="note">bit6-0 = id (0-73)</text>
+
+  <!-- Voltage divider -->
+  <rect x="560" y="230" width="150" height="120" class="box" rx="6"/>
+  <text x="572" y="252" class="lbl-b">Divider (5V-&gt;3.3V)</text>
+  <text x="572" y="274" class="pin">Nano D3 --[10k]--+</text>
+  <text x="592" y="294" class="pin">|</text>
+  <text x="572" y="314" class="pin">Pico GP1 &lt;--+--[22k]--GND</text>
+  <text x="572" y="336" class="note">~3.44V at GP1</text>
+
+  <!-- direct line note -->
+  <text x="560" y="200" class="note">Nano D2 &lt;-&gt; Pico GP0 : direct connection (no divider needed)</text>
+
+  <!-- Pico -->
+  <rect x="760" y="60" width="240" height="480" class="mcu" rx="6"/>
+  <text x="775" y="85" class="lbl-b">Raspberry Pi Pico (CircuitPython)</text>
+  <text x="775" y="115" class="pin">GP0 (UART0 TX) -&gt; Nano D2 (RX), direct</text>
+  <text x="775" y="135" class="pin">GP1 (UART0 RX) &lt;- divider &lt;- Nano D3 (TX)</text>
+  <text x="775" y="165" class="pin">GP2 -&gt; Alt LED (+resistor) -&gt; GND</text>
+  <text x="775" y="185" class="pin">GP3 -&gt; CapsLock LED (+resistor) -&gt; GND</text>
+  <text x="775" y="205" class="pin">GP4 -&gt; NumLock LED (+resistor) -&gt; GND</text>
+  <text x="775" y="225" class="pin">GP5 -&gt; Shift LED (+resistor) -&gt; GND</text>
+  <text x="775" y="255" class="pin">GP6 -&gt; Mode switch -&gt; GND (internal pull-up)</text>
+  <text x="775" y="275" class="note">GP7 previously used, found flaky -</text>
+  <text x="775" y="291" class="note">kept as spare / do not rely on it</text>
+  <text x="775" y="320" class="pin">USB -&gt; PC (HID Keyboard + Mouse)</text>
+  <text x="775" y="350" class="note">code.py + adafruit_hid library</text>
+  <text x="775" y="368" class="note">in CIRCUITPY/lib/adafruit_hid</text>
+
+  <!-- LEDs + switch block -->
+  <rect x="1060" y="150" width="220" height="260" class="box" rx="6"/>
+  <text x="1075" y="175" class="lbl-b">Indicators / Input</text>
+  <circle cx="1090" cy="205" r="8" fill="#3b82f6"/>
+  <text x="1108" y="210" class="pin">Alt LED</text>
+  <circle cx="1090" cy="235" r="8" fill="#3b82f6"/>
+  <text x="1108" y="240" class="pin">CapsLock LED</text>
+  <circle cx="1090" cy="265" r="8" fill="#3b82f6"/>
+  <text x="1108" y="270" class="pin">NumLock LED</text>
+  <circle cx="1090" cy="295" r="8" fill="#3b82f6"/>
+  <text x="1108" y="300" class="pin">Shift LED</text>
+  <rect x="1082" y="330" width="35" height="20" fill="#e5e5e5" stroke="#333"/>
+  <text x="1128" y="345" class="pin">Tact switch (mode toggle)</text>
+  <text x="1075" y="380" class="note">4x LED + series resistor,</text>
+  <text x="1075" y="396" class="note">values chosen to taste</text>
+
+  <!-- connecting lines -->
+  <line x1="200" y1="300" x2="300" y2="300" class="wire"/>
+  <line x1="520" y1="300" x2="560" y2="290" class="wire"/>
+  <line x1="710" y1="290" x2="760" y2="130" class="wire"/>
+  <line x1="710" y1="290" x2="760" y2="150" class="wire"/>
+  <line x1="1000" y1="200" x2="1060" y2="205" class="wire"/>
+
+  <text x="20" y="560" class="note">Full pin tables and protocol details: see README.md and docs/pinout.md</text>
+</svg>
