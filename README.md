@@ -17,6 +17,10 @@ Arduino Nano(信号読み取り) + Raspberry Pi Pico(CircuitPython, USB HID出�
 
 詳しい配線・信号プロトコルは [docs/pinout.md](docs/pinout.md)、配線図は [docs/wiring-diagram.svg](docs/wiring-diagram.svg) を参照してください。
 
+KiCadの正式な回路図(SFCコントローラーポート拡張込み)は [hardware/schematic/famicom-expand-usb-adapter.kicad_sch](hardware/schematic/famicom-expand-usb-adapter.kicad_sch)(閲覧だけなら[PDF](hardware/schematic/famicom-expand-usb-adapter.pdf)でもOK)、結線一覧表は [hardware/wiring/connection_list.xlsx](hardware/wiring/connection_list.xlsx) にあります。
+
+![回路図プレビュー](hardware/schematic/famicom-expand-usb-adapter-preview.png)
+
 ## 実機での動作状況(2026-08-01時点)
 
 - キーボードモード: 動作確認済み
@@ -48,6 +52,23 @@ Arduino Nano(信号読み取り) + Raspberry Pi Pico(CircuitPython, USB HID出�
 
 拡張端子コネクタ単体では基板から取り外せなかったため、ファミコン本体の基板ごと超音波カッターで切り抜いて使用。切り出した基板は結束バンドでユニバーサル基板/外装に固定している。
 
+### SFCコントローラーポート拡張(設計中、配線図のみ)
+
+スーファミ実機の1P/2Pコントローラーソケットをそのまま流用し、Nanoに追加接続する計画。CLOCK・LATCH・+5V・GNDは1P/2Pで共通(実機と同じ配り方)、DATA線(4番ピン)とD1線(5番ピン、マウス/スーパースコープの拡張データ用)だけ1P/2Pそれぞれ別配線にする。6番ピン(IOBIT、マルチタップ検出用)は信号方向が未検証のため今回は未結線。
+
+Nanoの空きピン(D0, D1, D4, A0〜A5)のうち6本を新規使用:
+
+| 信号 | Nanoピン |
+|---|---|
+| CLOCK(1P/2P共通) | D4 |
+| LATCH(1P/2P共通) | A0 |
+| DATA(1P) | A1 |
+| D1(1P) | A2 |
+| DATA(2P) | A3 |
+| D1(2P) | A4 |
+
+ファームウェア側の読み取り処理はまだ未実装。配線・回路図・結線一覧表のみ先行して用意した状態。
+
 ## 既知の注意点
 
 - キーボードと光線銃はDA15の4番・5番ピンを共用しているため、**同時接続は不可**(実機の前提通り)。トリガーを長押しするとキーボード側のマトリクス走査にも同じ物理ピンの変化が伝わり、擬似的なキーイベントが大量発生することを確認済み(キーボード未接続時は実害なし)。詳細は [docs/pinout.md](docs/pinout.md) 参照。
@@ -69,3 +90,5 @@ Arduino Nano(信号読み取り) + Raspberry Pi Pico(CircuitPython, USB HID出�
 
 - `_`(0x87)、YEN(0x89)キーの実測補正
 - ザッパーモードのLEDアニメーション速度(`ZAPPER_ANIM_STEP=0.15秒`)の調整
+- SFCコントローラーポート: 配線・回路図は用意済みだが、実配線・Nano側の読み取りファームウェアはまだ未実装
+- SFCコントローラーポート6番ピン(IOBIT)の信号方向・用途の実機検証
