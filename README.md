@@ -26,14 +26,15 @@ KiCadの正式な回路図(SFCコントローラーポート拡張込み)は [ha
 - キーボードモード: 動作確認済み
 - 光線銃(ザッパー)モード: 実機確認済み(トリガー→左クリック、センサー→右クリック)
 - `_` / YENキーのHID Usage値は理論値のまま未実測(要検証)
-- SFCコントローラー/マウス: **ファームウェア実装済み、実機動作は未検証**(下記「ファームウェア」参照)
+- SFCコントローラー(標準パッド): **実機確認済み**。ボタン判定(アクティブLow)・並び(L=Q、R=Wなど)とも実装通りで反転不要だった
+- SFCマウス: 実機動作は未検証(下記「ファームウェア」参照)
 
 ## ファームウェア
 
 - [`firmware/nano/famicom_scanner.ino`](firmware/nano/famicom_scanner.ino) — Nano側。Arduino IDEで書き込み(ボード: Arduino Nano, ATmega328)。
 - [`firmware/pico/code.py`](firmware/pico/code.py) — Pico側。CircuitPython + [adafruit_hid](https://github.com/adafruit/Adafruit_CircuitPython_HID) ライブラリが必要(`CIRCUITPY/lib/adafruit_hid` に配置)。Picoのファームウェア自体もCircuitPythonに書き換えておくこと(Arduino/arduino-picoコアでは不可、経緯は下記参照)。
 
-### SFCコントローラー/マウス対応(実機未検証)
+### SFCコントローラー/マウス対応(パッドは実機確認済み、マウスは未検証)
 
 - 1P/2Pとも毎スキャンごとに32bit読み、**先頭バイトが0x00なら自動的にマウスと判定**(標準パッドは切替スイッチ不要、ホットスワップにも対応)
 - 標準パッドのボタン(B/Y/Select/Start/Up/Down/Left/Right/A/X/L/R)は**キーボードキーとして出力**(1P: Z/A/RShift/Enter/矢印/X/S/Q/W、2P: テンキー、`code.py`の`KEYMAP_SFC1`/`KEYMAP_SFC2`で変更可能)
@@ -42,10 +43,11 @@ KiCadの正式な回路図(SFCコントローラーポート拡張込み)は [ha
 - Nano⇔Pico間のUARTは57600bpsに引き上げ(マウスは1回の更新で4バイト必要なため、9600bpsのままだと詰まる)
 - ボタン/マウスボタンを押しっぱなしにしても、100ms間隔で状態を再送するようにしてある(Pico側の無通信ウォッチドッグが押しっぱなし中に誤って離してしまうのを防止)
 
-**未検証・要実機確認**:
+標準パッドの32bit読み出し・ボタン判定(アクティブLow)・並び順(L/RがQ/Wに正しく割り当たることを確認済み)は実機で動作確認済み。CLOCK/LATCHのタイミングも問題なし。
+
+**未検証・要実機確認(マウス)**:
 - マウスレポートのL/Rボタンのビット位置(資料によって表記が割れていたため`code.py`側のコメントに従い実測で要修正の可能性あり)
 - Y/X移動方向の符号(上下左右が逆に感じたら`famicom_scanner.ino`の`processSFCPort`内の符号を反転)
-- 32bit読み出しのタイミング(CLOCK/LATCHのパルス幅は資料値から見積もった値。読み取りが安定しない場合は`delayMicroseconds`を調整)
 
 ## ハードウェア
 
