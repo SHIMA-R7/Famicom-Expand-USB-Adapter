@@ -7,8 +7,8 @@ Confirmed by measurement + WDIC / nesmd.nomaki.jp reference material.
 | DA15 pin | Role | Nano pin |
 |---|---|---|
 | 1 | GND | GND |
-| 2 | (unused / MIC?) | not connected |
-| 3 | (unused / unknown) | not connected |
+| 2 | (unused on Famicom side / MIC?) | **A0** (shared with SFC_LATCH) |
+| 3 | (unused on Famicom side / unknown) | **A1** (shared with SFC_DATA_1P) |
 | 4 | Keyboard D4 / **Zapper TRIGGER** | D11 |
 | 5 | Keyboard D3 / **Zapper SENSOR** | D10 |
 | 6 | Keyboard D2 | D9 |
@@ -23,6 +23,13 @@ Confirmed by measurement + WDIC / nesmd.nomaki.jp reference material.
 **Note:** pins 4 and 5 are shared between the keyboard and the Zapper (the real
 hardware assumes only one is ever connected at a time). Do not connect both
 the keyboard and the Zapper simultaneously.
+
+**Note:** pins 2 and 3 carry no signal on the Famicom side (undocumented /
+unused), so they are deliberately reused for the SFC controller ports'
+LATCH and 1P DATA lines to keep all six new SFC signals on Nano's A0-A5
+(full SFC pin table in the main [README](../README.md)). Same rule as pins
+4/5: do not have the Famicom accessory and an SFC controller connected at
+the same time.
 
 ## Keyboard scan protocol
 
