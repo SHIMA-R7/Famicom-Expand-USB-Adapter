@@ -1,57 +1,39 @@
 <title>ZAPPER TEST RANGE — 光線銃テスト射撃場</title>
 <style>
   :root {
-    --crt-bg: #0b0b10;
-    --crt-panel: #15151f;
-    --crt-line: #2a2a3a;
-    --nes-grey: #7c7c7c;
-    --nes-red: #b53120;
-    --nes-sky: #3cbcfc;
-    --nes-amber: #f8b800;
-    --nes-ink: #e8e8f0;
-    --nes-dim: #8b8b9c;
+    --bg: #0b0b10;
+    --panel: #15151f;
+    --line: #2a2a3a;
+    --red: #b53120;
+    --sky: #3cbcfc;
+    --amber: #f8b800;
+    --ink: #e8e8f0;
+    --dim: #8b8b9c;
     --good: #58d68d;
     --bad: #e8604c;
   }
 
-  :root[data-theme="light"] {
-    --crt-bg: #d8d8dc;
-    --crt-panel: #ececed;
-    --crt-line: #b8b8c0;
-    --nes-ink: #1a1a22;
-    --nes-dim: #5c5c6a;
-    --nes-sky: #1878b8;
-    --good: #1e8449;
-  }
-
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
-      --crt-bg: #d8d8dc;
-      --crt-panel: #ececed;
-      --crt-line: #b8b8c0;
-      --nes-ink: #1a1a22;
-      --nes-dim: #5c5c6a;
-      --nes-sky: #1878b8;
-      --good: #1e8449;
+      --bg: #d8d8dc; --panel: #ececed; --line: #b8b8c0;
+      --ink: #1a1a22; --dim: #5c5c6a; --sky: #1878b8; --good: #1e8449;
     }
   }
-
+  :root[data-theme="light"] {
+    --bg: #d8d8dc; --panel: #ececed; --line: #b8b8c0;
+    --ink: #1a1a22; --dim: #5c5c6a; --sky: #1878b8; --good: #1e8449;
+  }
   :root[data-theme="dark"] {
-    --crt-bg: #0b0b10;
-    --crt-panel: #15151f;
-    --crt-line: #2a2a3a;
-    --nes-ink: #e8e8f0;
-    --nes-dim: #8b8b9c;
-    --nes-sky: #3cbcfc;
-    --good: #58d68d;
+    --bg: #0b0b10; --panel: #15151f; --line: #2a2a3a;
+    --ink: #e8e8f0; --dim: #8b8b9c; --sky: #3cbcfc; --good: #58d68d;
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    background: var(--crt-bg);
-    color: var(--nes-ink);
+    background: var(--bg);
+    color: var(--ink);
     font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
     display: flex;
     justify-content: center;
@@ -59,228 +41,112 @@
     min-height: 100vh;
   }
 
-  .shell {
-    width: 100%;
-    max-width: 900px;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
+  .shell { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 1rem; }
 
   header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem 1rem;
-    border-bottom: 2px solid var(--crt-line);
-    padding-bottom: 0.75rem;
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: 0.5rem 1rem;
+    border-bottom: 2px solid var(--line); padding-bottom: 0.75rem;
   }
 
   h1 {
     margin: 0;
     font-size: clamp(1.1rem, 3.2vw, 1.6rem);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    text-wrap: balance;
-    color: var(--nes-red);
-    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    text-wrap: balance; color: var(--red);
   }
 
-  :root[data-theme="light"] h1,
-  :root:not([data-theme="dark"]) h1 { text-shadow: none; }
-
   .subtitle {
-    margin: 0;
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
-    color: var(--nes-dim);
-    text-transform: uppercase;
+    margin: 0; font-size: 0.78rem; letter-spacing: 0.1em;
+    color: var(--dim); text-transform: uppercase;
   }
 
   .hud {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 0.5rem;
-    background: var(--crt-panel);
-    border: 2px solid var(--crt-line);
-    padding: 0.75rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    gap: 0.5rem; background: var(--panel);
+    border: 2px solid var(--line); padding: 0.75rem;
   }
 
   .stat { display: flex; flex-direction: column; gap: 0.2rem; }
-
   .stat-label {
-    font-size: 0.62rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--nes-dim);
+    font-size: 0.62rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--dim);
   }
-
-  .stat-value {
-    font-size: 1.35rem;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-  }
-
-  .stat-value.score { color: var(--nes-amber); }
+  .stat-value { font-size: 1.35rem; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+  .stat-value.score { color: var(--amber); }
   .stat-value.hit { color: var(--good); }
   .stat-value.miss { color: var(--bad); }
 
-  .stage-wrap {
-    position: relative;
-    border: 2px solid var(--crt-line);
-    background: #000;
-    overflow: hidden;
-  }
-
-  canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-    cursor: crosshair;
-    touch-action: manipulation;
-  }
+  .stage-wrap { position: relative; border: 2px solid var(--line); background: #000; overflow: hidden; }
+  canvas { display: block; width: 100%; height: auto; touch-action: manipulation; }
 
   .scanlines {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+    position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.22) 0px,
-      rgba(0, 0, 0, 0.22) 1px,
-      transparent 1px,
-      transparent 3px
-    );
+      to bottom, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
     mix-blend-mode: multiply;
   }
+  .scanlines.hidden { display: none; }
 
   .overlay {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-content: center;
-    gap: 0.9rem;
-    text-align: center;
-    padding: 1.5rem;
-    background: rgba(8, 8, 14, 0.86);
-    color: #e8e8f0;
+    position: absolute; inset: 0; display: grid; place-content: center;
+    gap: 0.9rem; text-align: center; padding: 1.5rem;
+    background: rgba(8,8,14,0.9); color: #e8e8f0;
   }
-
   .overlay[hidden] { display: none; }
-
   .overlay h2 {
-    margin: 0;
-    font-size: clamp(1.2rem, 4vw, 2rem);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--nes-amber);
+    margin: 0; font-size: clamp(1.2rem, 4vw, 2rem);
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber);
   }
-
-  .overlay p {
-    margin: 0;
-    max-width: 46ch;
-    line-height: 1.7;
-    font-size: 0.84rem;
-    color: #b8b8c8;
-  }
-
-  .overlay kbd {
-    font: inherit;
-    background: #2a2a3a;
-    border: 1px solid #45455a;
-    border-bottom-width: 2px;
-    padding: 0.1em 0.45em;
-    color: #e8e8f0;
-  }
+  .overlay p { margin: 0; max-width: 50ch; line-height: 1.75; font-size: 0.82rem; color: #b8b8c8; }
+  .overlay ol { margin: 0; padding-left: 1.4em; text-align: left; max-width: 50ch; font-size: 0.82rem; line-height: 1.8; color: #b8b8c8; }
+  .overlay strong { color: #e8e8f0; }
 
   button {
-    font: inherit;
-    font-size: 0.8rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    background: var(--nes-red);
-    color: #fff;
-    border: none;
-    border-bottom: 3px solid #7a2116;
-    padding: 0.7rem 1.6rem;
-    cursor: pointer;
-    justify-self: center;
+    font: inherit; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase;
+    background: var(--red); color: #fff; border: none; border-bottom: 3px solid #7a2116;
+    padding: 0.7rem 1.6rem; cursor: pointer; justify-self: center;
   }
-
   button:hover { filter: brightness(1.12); }
   button:active { border-bottom-width: 1px; transform: translateY(2px); }
-  button:focus-visible { outline: 3px solid var(--nes-sky); outline-offset: 3px; }
+  button:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
 
-  .signals {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.5rem;
+  .controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .controls label {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim);
   }
+  .controls input[type="range"] { width: 8rem; }
+  .controls output { font-variant-numeric: tabular-nums; color: var(--ink); min-width: 4ch; }
 
+  .signals { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; }
   .signal {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: var(--crt-panel);
-    border: 2px solid var(--crt-line);
-    padding: 0.65rem 0.8rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    background: var(--panel); border: 2px solid var(--line); padding: 0.65rem 0.8rem;
   }
-
   .lamp {
-    width: 0.85rem;
-    height: 0.85rem;
-    border-radius: 50%;
-    background: var(--crt-line);
-    flex-shrink: 0;
-    transition: background 90ms linear, box-shadow 90ms linear;
+    width: 0.85rem; height: 0.85rem; border-radius: 50%;
+    background: var(--line); flex-shrink: 0;
+    transition: background 60ms linear, box-shadow 60ms linear;
   }
-
-  .signal.on .lamp {
-    background: var(--nes-amber);
-    box-shadow: 0 0 10px var(--nes-amber);
-  }
-
+  .signal.on .lamp { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
   .signal-text { display: flex; flex-direction: column; gap: 0.15rem; }
-
-  .signal-name {
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .signal-note {
-    font-size: 0.64rem;
-    color: var(--nes-dim);
-  }
+  .signal-name { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .signal-note { font-size: 0.64rem; color: var(--dim); }
 
   .log {
-    background: var(--crt-panel);
-    border: 2px solid var(--crt-line);
-    padding: 0.75rem;
-    max-height: 8rem;
-    overflow-y: auto;
-    font-size: 0.7rem;
-    line-height: 1.9;
-    color: var(--nes-dim);
+    background: var(--panel); border: 2px solid var(--line); padding: 0.75rem;
+    max-height: 9rem; overflow-y: auto; font-size: 0.7rem; line-height: 1.9; color: var(--dim);
   }
-
   .log-entry { display: flex; gap: 0.75rem; }
-  .log-time { color: var(--nes-sky); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .log-time { color: var(--sky); font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .log-hit { color: var(--good); }
   .log-miss { color: var(--bad); }
+  .log-warn { color: var(--amber); }
 
-  footer {
-    font-size: 0.68rem;
-    line-height: 1.9;
-    color: var(--nes-dim);
-  }
-
-  footer code {
-    background: var(--crt-panel);
-    border: 1px solid var(--crt-line);
-    padding: 0.05em 0.4em;
-  }
+  footer { font-size: 0.68rem; line-height: 1.9; color: var(--dim); }
+  footer code { background: var(--panel); border: 1px solid var(--line); padding: 0.05em 0.4em; }
+  footer strong { color: var(--ink); }
 
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -290,7 +156,7 @@
 <div class="shell">
   <header>
     <h1>Zapper Test Range</h1>
-    <p class="subtitle">光線銃 / ザッパーモード 動作確認用</p>
+    <p class="subtitle">光線銃 / ダックハント方式の走査で命中判定</p>
   </header>
 
   <div class="hud">
@@ -307,27 +173,50 @@
       <span class="stat-value miss" id="misses">0</span>
     </div>
     <div class="stat">
-      <span class="stat-label">Accuracy</span>
-      <span class="stat-value" id="accuracy">—</span>
+      <span class="stat-label">Shots</span>
+      <span class="stat-value" id="shots">0</span>
     </div>
     <div class="stat">
       <span class="stat-label">Time</span>
-      <span class="stat-value" id="time">30</span>
+      <span class="stat-value" id="time">45</span>
     </div>
   </div>
 
   <div class="stage-wrap">
     <canvas id="stage" width="800" height="450"></canvas>
-    <div class="scanlines"></div>
+    <div class="scanlines" id="scanlines"></div>
     <div class="overlay" id="overlay">
       <h2 id="overlay-title">Ready</h2>
-      <p id="overlay-body">
-        Picoをザッパーモードに切り替えてから開始してください。
-        <strong>トリガー</strong>が左クリック、<strong>センサー</strong>(受光)が右クリックとして届きます。
-        的をトリガーで撃つと加点、外すと減点。制限時間は30秒です。
-      </p>
+      <div id="overlay-body">
+        <p>
+          ファミコン実機と同じ<strong>ダックハント方式</strong>で判定します。光線銃に位置を測る機能はないため、
+          撃った瞬間に画面を走査して「どの的を狙っていたか」を光で判別します。
+        </p>
+        <ol>
+          <li>トリガーを引くと画面が<strong>全黒</strong>になる(不正防止のチェック)</li>
+          <li>的が<strong>1つずつ順番に白く光る</strong></li>
+          <li>センサーが光を検知した瞬間の的が<strong>命中</strong></li>
+        </ol>
+        <p>
+          Picoをザッパーモード(GP6のスイッチ)にしてから開始してください。
+          画面の明るさは上げ、部屋は暗めにすると検知しやすくなります。
+        </p>
+      </div>
       <button id="start-btn" type="button">Start</button>
     </div>
+  </div>
+
+  <div class="controls">
+    <label>
+      点灯時間
+      <input type="range" id="flash-ms" min="60" max="400" step="10" value="150" />
+      <output id="flash-ms-out">150ms</output>
+    </label>
+    <label>
+      黒画面
+      <input type="range" id="black-ms" min="60" max="400" step="10" value="150" />
+      <output id="black-ms-out">150ms</output>
+    </label>
   </div>
 
   <div class="signals">
@@ -350,9 +239,10 @@
   <div class="log" id="log" aria-live="polite"></div>
 
   <footer>
-    ゲームを始めなくても上のランプでトリガー/センサーの入力確認ができます。ランプが光らない場合は、Pico側が
-    <code>zapper_mode</code> になっているか(GP6のスイッチ)を確認してください。センサー(受光)はブラウン管以外では
-    反応しないことがあります — その場合でもトリガー側だけで射撃テストは可能です。
+    ランプはゲーム外でも常時反応するので、<strong>配線チェックだけにも使えます</strong>。
+    命中しない場合は「点灯時間」を長くすると検知しやすくなります(USB HID経由のぶん実機より遅延があるため、
+    実機の1フレーム=16.6msでは間に合いません)。黒画面中にセンサーが反応する場合は、
+    周囲の照明を拾っているか<code>zapper_mode</code>以外の信号が来ています。
   </footer>
 </div>
 
@@ -360,16 +250,16 @@
 (function () {
   "use strict";
 
-  const canvas = document.getElementById("stage");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width;
-  const H = canvas.height;
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width;
+  var H = canvas.height;
 
-  const el = {
+  var el = {
     score: document.getElementById("score"),
     hits: document.getElementById("hits"),
     misses: document.getElementById("misses"),
-    accuracy: document.getElementById("accuracy"),
+    shots: document.getElementById("shots"),
     time: document.getElementById("time"),
     overlay: document.getElementById("overlay"),
     overlayTitle: document.getElementById("overlay-title"),
@@ -378,32 +268,58 @@
     log: document.getElementById("log"),
     sigTrigger: document.getElementById("sig-trigger"),
     sigSensor: document.getElementById("sig-sensor"),
+    scanlines: document.getElementById("scanlines"),
+    flashMs: document.getElementById("flash-ms"),
+    flashMsOut: document.getElementById("flash-ms-out"),
+    blackMs: document.getElementById("black-ms"),
+    blackMsOut: document.getElementById("black-ms-out"),
   };
 
-  const ROUND_SECONDS = 30;
-  const state = {
+  var ROUND_SECONDS = 45;
+
+  // PHASE_IDLE: 通常描画 / PHASE_BLACK: 全黒(不正チェック) / PHASE_FLASH: 的を順番に点灯
+  var PHASE_IDLE = 0, PHASE_BLACK = 1, PHASE_FLASH = 2;
+
+  var state = {
     running: false,
-    score: 0,
-    hits: 0,
-    misses: 0,
+    score: 0, hits: 0, misses: 0, shots: 0,
     endsAt: 0,
     targets: [],
-    flashes: [],
     spawnTimer: 0,
-    muzzleFlash: 0,
+    phase: PHASE_IDLE,
+    phaseStart: 0,
+    flashIndex: 0,
+    scanOrder: [],
+    sensorSeenInPhase: false,
+    resultFlash: null,
   };
 
+  var sensorDown = false;
+
+  // requestAnimationFrameのタイムスタンプとperformance.now()は環境によって基準が
+  // 異なることがあるため、時計は「直近のフレーム時刻」1つに統一する
+  var nowMs = performance.now();
+
+  function flashMs() { return Number(el.flashMs.value); }
+  function blackMs() { return Number(el.blackMs.value); }
+
+  el.flashMs.addEventListener("input", function () {
+    el.flashMsOut.textContent = el.flashMs.value + "ms";
+  });
+  el.blackMs.addEventListener("input", function () {
+    el.blackMsOut.textContent = el.blackMs.value + "ms";
+  });
+
   function logLine(kind, text) {
-    const row = document.createElement("div");
+    var row = document.createElement("div");
     row.className = "log-entry";
-    const t = document.createElement("span");
+    var t = document.createElement("span");
     t.className = "log-time";
-    const d = new Date();
-    t.textContent =
-      String(d.getHours()).padStart(2, "0") + ":" +
+    var d = new Date();
+    t.textContent = String(d.getHours()).padStart(2, "0") + ":" +
       String(d.getMinutes()).padStart(2, "0") + ":" +
       String(d.getSeconds()).padStart(2, "0");
-    const m = document.createElement("span");
+    var m = document.createElement("span");
     if (kind) m.className = "log-" + kind;
     m.textContent = text;
     row.append(t, m);
@@ -412,162 +328,228 @@
   }
 
   function spawnTarget(onScreen) {
-    const r = 26 + Math.random() * 18;
-    const fromLeft = Math.random() < 0.5;
-    const speed = 70 + Math.random() * 110;
-    state.targets.push({
-      x: onScreen
-        ? W * 0.2 + Math.random() * W * 0.6
-        : (fromLeft ? -r : W + r),
-      y: 60 + Math.random() * (H * 0.7 - 60),
+    var r = 30 + Math.random() * 16;
+    var fromLeft = Math.random() < 0.5;
+    var speed = 55 + Math.random() * 85;
+    var t = {
+      x: onScreen ? W * 0.15 + Math.random() * W * 0.7 : (fromLeft ? -r : W + r),
+      y: 60 + Math.random() * (H * 0.68 - 60),
       r: r,
       vx: fromLeft ? speed : -speed,
       bobPhase: Math.random() * Math.PI * 2,
-      bobAmp: 8 + Math.random() * 22,
+      bobAmp: 6 + Math.random() * 18,
       baseY: 0,
       alive: true,
-      hitAt: 0,
-    });
-    const t = state.targets[state.targets.length - 1];
+    };
     t.baseY = t.y;
+    state.targets.push(t);
   }
 
-  function drawBackground(now) {
+  function drawScene(now) {
     ctx.fillStyle = "#101020";
     ctx.fillRect(0, 0, W, H);
 
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.78);
-    skyGrad.addColorStop(0, "#12305c");
-    skyGrad.addColorStop(1, "#3cbcfc");
-    ctx.fillStyle = skyGrad;
+    var sky = ctx.createLinearGradient(0, 0, 0, H * 0.78);
+    sky.addColorStop(0, "#12305c");
+    sky.addColorStop(1, "#3cbcfc");
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H * 0.78);
 
-    // distant hills
     ctx.fillStyle = "#1d6b3a";
     ctx.beginPath();
     ctx.moveTo(0, H * 0.78);
-    for (let x = 0; x <= W; x += 20) {
-      const y = H * 0.78 - 34 - Math.sin(x * 0.011) * 22 - Math.sin(x * 0.031) * 9;
-      ctx.lineTo(x, y);
+    for (var x = 0; x <= W; x += 20) {
+      ctx.lineTo(x, H * 0.78 - 34 - Math.sin(x * 0.011) * 22 - Math.sin(x * 0.031) * 9);
     }
     ctx.lineTo(W, H * 0.78);
     ctx.closePath();
     ctx.fill();
 
-    // ground
     ctx.fillStyle = "#2f7f3f";
     ctx.fillRect(0, H * 0.78, W, H * 0.22);
     ctx.fillStyle = "rgba(0,0,0,0.18)";
-    for (let x = 0; x < W; x += 32) {
-      ctx.fillRect(x, H * 0.78, 16, H * 0.22);
+    for (var gx = 0; gx < W; gx += 32) ctx.fillRect(gx, H * 0.78, 16, H * 0.22);
+
+    for (var i = 0; i < state.targets.length; i++) {
+      drawTarget(state.targets[i], now);
     }
   }
 
   function drawTarget(t, now) {
-    const wobble = Math.sin(now / 320 + t.bobPhase) * t.bobAmp;
-    const y = t.baseY + wobble;
-    t.y = y;
-
+    t.y = t.baseY + Math.sin(now / 340 + t.bobPhase) * t.bobAmp;
     ctx.save();
-    ctx.translate(t.x, y);
-
-    // concentric NES-flavored target rings
-    const rings = [
-      ["#e8e8f0", 1.0],
-      ["#b53120", 0.74],
-      ["#e8e8f0", 0.48],
-      ["#b53120", 0.24],
-    ];
-    for (const [color, scale] of rings) {
-      ctx.fillStyle = color;
+    ctx.translate(t.x, t.y);
+    var rings = [["#e8e8f0", 1.0], ["#b53120", 0.74], ["#e8e8f0", 0.48], ["#b53120", 0.24]];
+    for (var i = 0; i < rings.length; i++) {
+      ctx.fillStyle = rings[i][0];
       ctx.beginPath();
-      ctx.arc(0, 0, t.r * scale, 0, Math.PI * 2);
+      ctx.arc(0, 0, t.r * rings[i][1], 0, Math.PI * 2);
       ctx.fill();
     }
-
     ctx.strokeStyle = "rgba(0,0,0,0.5)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 0, t.r, 0, Math.PI * 2);
     ctx.stroke();
-
     ctx.restore();
   }
 
-  function drawFlashes(now) {
-    for (const f of state.flashes) {
-      const age = (now - f.at) / 480;
-      if (age >= 1) continue;
-      ctx.save();
-      ctx.globalAlpha = 1 - age;
-      ctx.translate(f.x, f.y);
-      if (f.kind === "hit") {
-        ctx.strokeStyle = "#f8b800";
-        ctx.lineWidth = 3;
-        const R = 12 + age * 46;
-        ctx.beginPath();
-        ctx.arc(0, 0, R, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = "#f8b800";
-        ctx.font = "bold 18px ui-monospace, monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("+" + f.points, 0, -R - 6);
-      } else {
-        ctx.strokeStyle = "#e8604c";
-        ctx.lineWidth = 3;
-        const s = 10 + age * 16;
-        ctx.beginPath();
-        ctx.moveTo(-s, -s); ctx.lineTo(s, s);
-        ctx.moveTo(s, -s); ctx.lineTo(-s, s);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-    state.flashes = state.flashes.filter((f) => now - f.at < 480);
-  }
-
-  function drawIdleHint() {
-    ctx.fillStyle = "rgba(8,8,14,0.55)";
+  // 実機同様、走査中は「全黒」→「的だけ白い四角」を順に描く。
+  // 白は最大輝度、周囲は完全な黒でセンサーのコントラストを稼ぐ。
+  function drawBlackFrame() {
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, W, H);
   }
 
-  let lastFrame = performance.now();
+  function drawFlashFrame(target) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    if (!target) return;
+    var s = target.r * 2.1;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(target.x - s / 2, target.y - s / 2, s, s);
+  }
 
-  function frame(now) {
-    const dt = Math.min((now - lastFrame) / 1000, 0.05);
+  function drawResultFlash(now) {
+    var f = state.resultFlash;
+    if (!f) return;
+    var age = (now - f.at) / 620;
+    if (age >= 1) { state.resultFlash = null; return; }
+    ctx.save();
+    ctx.globalAlpha = 1 - age;
+    ctx.translate(f.x, f.y);
+    if (f.kind === "hit") {
+      ctx.strokeStyle = "#f8b800";
+      ctx.lineWidth = 4;
+      var R = 14 + age * 54;
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#f8b800";
+      ctx.font = "bold 20px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("+" + f.points, 0, -R - 8);
+    } else {
+      ctx.fillStyle = "#e8604c";
+      ctx.font = "bold 18px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("MISS", 0, 0);
+    }
+    ctx.restore();
+  }
+
+  function beginScan() {
+    if (!state.running || state.phase !== PHASE_IDLE) return;
+    if (state.targets.length === 0) {
+      logLine("warn", "的がいません");
+      return;
+    }
+    state.shots += 1;
+    state.phase = PHASE_BLACK;
+    state.phaseStart = nowMs;
+    state.sensorSeenInPhase = sensorDown;
+    // 手前(下)にいる的から順に走査。実機も描画順で優先度が決まる
+    state.scanOrder = state.targets.slice().sort(function (a, b) { return b.y - a.y; });
+    state.flashIndex = 0;
+    updateHud();
+  }
+
+  function finishScan(hitTarget) {
+    if (hitTarget) {
+      var points = 100;
+      state.score += points;
+      state.hits += 1;
+      hitTarget.alive = false;
+      state.resultFlash = { kind: "hit", x: hitTarget.x, y: hitTarget.y, at: nowMs, points: points };
+      logLine("hit", "HIT  +" + points + "  (走査 " + (state.scanOrder.indexOf(hitTarget) + 1) +
+        "/" + state.scanOrder.length + " 番目で受光)");
+    } else {
+      state.score = Math.max(0, state.score - 10);
+      state.misses += 1;
+      state.resultFlash = { kind: "miss", x: W / 2, y: H / 2, at: nowMs };
+      logLine("miss", "MISS -10  (どの的の点灯でも受光なし)");
+    }
+    state.targets = state.targets.filter(function (t) { return t.alive; });
+    state.phase = PHASE_IDLE;
+    updateHud();
+  }
+
+  function updateScan(now) {
+    if (state.phase === PHASE_BLACK) {
+      if (sensorDown) state.sensorSeenInPhase = true;
+      if (now - state.phaseStart >= blackMs()) {
+        if (state.sensorSeenInPhase) {
+          // 黒画面なのに受光 = 外光を拾っている(実機の不正防止と同じ判定)
+          state.misses += 1;
+          state.score = Math.max(0, state.score - 10);
+          state.resultFlash = { kind: "miss", x: W / 2, y: H / 2, at: now };
+          logLine("warn", "REJECT  黒画面中に受光 — 外光を拾っています");
+          state.phase = PHASE_IDLE;
+          updateHud();
+          return;
+        }
+        state.phase = PHASE_FLASH;
+        state.phaseStart = now;
+        state.flashIndex = 0;
+        state.sensorSeenInPhase = false;
+      }
+      return;
+    }
+
+    if (state.phase === PHASE_FLASH) {
+      if (sensorDown) state.sensorSeenInPhase = true;
+      if (state.sensorSeenInPhase) {
+        finishScan(state.scanOrder[state.flashIndex]);
+        return;
+      }
+      if (now - state.phaseStart >= flashMs()) {
+        state.flashIndex += 1;
+        state.phaseStart = now;
+        state.sensorSeenInPhase = false;
+        if (state.flashIndex >= state.scanOrder.length) finishScan(null);
+      }
+    }
+  }
+
+  var lastFrame = performance.now();
+
+  function frame() {
+    var now = performance.now();
+    nowMs = now;
+    var dt = Math.min((now - lastFrame) / 1000, 0.05);
     lastFrame = now;
-
-    drawBackground(now);
 
     if (state.running) {
       state.spawnTimer -= dt;
-      if (state.spawnTimer <= 0 && state.targets.length < 6) {
-        spawnTarget();
-        state.spawnTimer = 0.4 + Math.random() * 0.5;
+      if (state.spawnTimer <= 0 && state.targets.length < 5) {
+        spawnTarget(false);
+        state.spawnTimer = 0.7 + Math.random() * 0.9;
       }
-
-      for (const t of state.targets) {
-        t.x += t.vx * dt;
+      if (state.phase === PHASE_IDLE) {
+        for (var i = 0; i < state.targets.length; i++) state.targets[i].x += state.targets[i].vx * dt;
+        state.targets = state.targets.filter(function (t) { return t.x > -90 && t.x < W + 90; });
       }
-      state.targets = state.targets.filter(
-        (t) => t.alive && t.x > -80 && t.x < W + 80
-      );
-
-      const remain = Math.max(0, Math.ceil((state.endsAt - now) / 1000));
+      updateScan(now);
+      var remain = Math.max(0, Math.ceil((state.endsAt - now) / 1000));
       el.time.textContent = String(remain);
-      if (now >= state.endsAt) endRound();
+      if (now >= state.endsAt && state.phase === PHASE_IDLE) endRound();
     }
 
-    for (const t of state.targets) drawTarget(t, now);
-    drawFlashes(now);
+    var scanning = state.phase !== PHASE_IDLE;
+    el.scanlines.classList.toggle("hidden", scanning);
 
-    if (state.muzzleFlash > 0) {
-      ctx.fillStyle = "rgba(248,184,0," + (state.muzzleFlash * 0.22).toFixed(3) + ")";
-      ctx.fillRect(0, 0, W, H);
-      state.muzzleFlash = Math.max(0, state.muzzleFlash - dt * 6);
+    if (state.phase === PHASE_BLACK) {
+      drawBlackFrame();
+    } else if (state.phase === PHASE_FLASH) {
+      drawFlashFrame(state.scanOrder[state.flashIndex]);
+    } else {
+      drawScene(now);
+      drawResultFlash(now);
+      if (!state.running) {
+        ctx.fillStyle = "rgba(8,8,14,0.55)";
+        ctx.fillRect(0, 0, W, H);
+      }
     }
-
-    if (!state.running) drawIdleHint();
 
     requestAnimationFrame(frame);
   }
@@ -576,49 +558,18 @@
     el.score.textContent = String(state.score);
     el.hits.textContent = String(state.hits);
     el.misses.textContent = String(state.misses);
-    const shots = state.hits + state.misses;
-    el.accuracy.textContent = shots === 0 ? "—" : Math.round((state.hits / shots) * 100) + "%";
-  }
-
-  function shootAt(px, py) {
-    if (!state.running) return;
-    state.muzzleFlash = 1;
-
-    let struck = null;
-    for (let i = state.targets.length - 1; i >= 0; i--) {
-      const t = state.targets[i];
-      const dx = px - t.x;
-      const dy = py - t.y;
-      if (dx * dx + dy * dy <= t.r * t.r) { struck = t; break; }
-    }
-
-    if (struck) {
-      const dist = Math.hypot(px - struck.x, py - struck.y) / struck.r;
-      const points = dist < 0.25 ? 100 : dist < 0.55 ? 50 : 20;
-      state.score += points;
-      state.hits += 1;
-      struck.alive = false;
-      state.flashes.push({ kind: "hit", x: struck.x, y: struck.y, at: performance.now(), points: points });
-      logLine("hit", "HIT  +" + points + (points === 100 ? "  (中心)" : ""));
-    } else {
-      state.score = Math.max(0, state.score - 10);
-      state.misses += 1;
-      state.flashes.push({ kind: "miss", x: px, y: py, at: performance.now() });
-      logLine("miss", "MISS -10");
-    }
-    updateHud();
+    el.shots.textContent = String(state.shots);
   }
 
   function startRound() {
     state.running = true;
-    state.score = 0;
-    state.hits = 0;
-    state.misses = 0;
+    state.score = 0; state.hits = 0; state.misses = 0; state.shots = 0;
     state.targets = [];
-    state.flashes = [];
     state.spawnTimer = 0;
-    for (let i = 0; i < 3; i++) spawnTarget(true);
-    state.endsAt = performance.now() + ROUND_SECONDS * 1000;
+    state.phase = PHASE_IDLE;
+    state.resultFlash = null;
+    for (var i = 0; i < 3; i++) spawnTarget(true);
+    state.endsAt = nowMs + ROUND_SECONDS * 1000;
     el.overlay.hidden = true;
     updateHud();
     logLine("", "--- ラウンド開始 ---");
@@ -627,44 +578,40 @@
   function endRound() {
     state.running = false;
     state.targets = [];
-    const shots = state.hits + state.misses;
-    const acc = shots === 0 ? 0 : Math.round((state.hits / shots) * 100);
+    state.phase = PHASE_IDLE;
+    var acc = state.shots === 0 ? 0 : Math.round((state.hits / state.shots) * 100);
     el.overlayTitle.textContent = "Time Up";
     el.overlayBody.innerHTML =
-      "スコア <strong>" + state.score + "</strong> / 命中 " + state.hits +
-      " · 外し " + state.misses + " · 命中率 " + (shots === 0 ? "—" : acc + "%") +
-      "<br>トリガーとセンサーのランプが両方点灯していれば、光線銃の配線は正常です。";
+      "<p>スコア <strong>" + state.score + "</strong><br>" +
+      "発射 " + state.shots + " 発 / 命中 " + state.hits + " / 外し " + state.misses +
+      " / 命中率 " + (state.shots === 0 ? "—" : acc + "%") + "</p>" +
+      "<p>一度も命中しない場合は「点灯時間」を長くするか、画面を明るく・部屋を暗くしてみてください。</p>";
     el.startBtn.textContent = "Retry";
     el.overlay.hidden = false;
     logLine("", "--- 終了  スコア " + state.score + " ---");
   }
 
-  function canvasPos(evt) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((evt.clientX - rect.left) / rect.width) * W,
-      y: ((evt.clientY - rect.top) / rect.height) * H,
-    };
-  }
-
-  // トリガー(左クリック)= 射撃、センサー(右クリック)= 受光ランプのみ
-  canvas.addEventListener("mousedown", function (evt) {
+  // トリガー(左クリック) = 撃つ、センサー(右クリック) = 受光
+  // 座標は一切使わない。ボタンが「いつ」押されたかだけを見る。
+  window.addEventListener("mousedown", function (evt) {
     if (evt.button === 0) {
       el.sigTrigger.classList.add("on");
-      const p = canvasPos(evt);
-      shootAt(p.x, p.y);
+      beginScan();
     } else if (evt.button === 2) {
+      sensorDown = true;
       el.sigSensor.classList.add("on");
-      logLine("", "SENSOR 受光");
     }
   });
 
   window.addEventListener("mouseup", function (evt) {
     if (evt.button === 0) el.sigTrigger.classList.remove("on");
-    if (evt.button === 2) el.sigSensor.classList.remove("on");
+    if (evt.button === 2) {
+      sensorDown = false;
+      el.sigSensor.classList.remove("on");
+    }
   });
 
-  canvas.addEventListener("contextmenu", function (evt) { evt.preventDefault(); });
+  window.addEventListener("contextmenu", function (evt) { evt.preventDefault(); });
 
   el.startBtn.addEventListener("click", startRound);
 
