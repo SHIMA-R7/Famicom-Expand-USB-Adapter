@@ -7,7 +7,7 @@ from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 from adafruit_hid.mouse import Mouse
 
-uart = busio.UART(board.GP0, board.GP1, baudrate=9600, timeout=0.01)
+uart = busio.UART(board.GP0, board.GP1, baudrate=57600, timeout=0.01)
 kbd = Keyboard(usb_hid.devices)
 mouse = Mouse(usb_hid.devices)
 
@@ -53,6 +53,24 @@ SHIFT_CODES = (Keycode.LEFT_SHIFT, Keycode.RIGHT_SHIFT)
 ALT_CODES = (Keycode.LEFT_ALT, Keycode.RIGHT_ALT)
 CTRL_CODES = (Keycode.LEFT_CONTROL, Keycode.RIGHT_CONTROL)
 
+# SFCコントローラー: id 74-85(1P)/86-97(2P)、並びはB,Y,Select,Start,Up,Down,Left,Right,A,X,L,R
+# 押しっぱなし方式(トグルではない)。好みに応じて自由に差し替え可。
+SFC1_BUTTON_BASE = 74
+SFC2_BUTTON_BASE = 86
+SFC1_MOUSE_ID = 98
+SFC2_MOUSE_ID = 99
+
+KEYMAP_SFC1 = [
+    Keycode.Z, Keycode.A, Keycode.RIGHT_SHIFT, Keycode.ENTER,
+    Keycode.UP_ARROW, Keycode.DOWN_ARROW, Keycode.LEFT_ARROW, Keycode.RIGHT_ARROW,
+    Keycode.X, Keycode.S, Keycode.Q, Keycode.W,
+]
+KEYMAP_SFC2 = [
+    Keycode.KEYPAD_ONE, Keycode.KEYPAD_SEVEN, Keycode.KEYPAD_ZERO, Keycode.KEYPAD_ENTER,
+    Keycode.KEYPAD_EIGHT, Keycode.KEYPAD_TWO, Keycode.KEYPAD_FOUR, Keycode.KEYPAD_SIX,
+    Keycode.KEYPAD_THREE, Keycode.KEYPAD_NINE, Keycode.KEYPAD_MINUS, Keycode.KEYPAD_PLUS,
+]
+
 last_packet_time = time.monotonic()
 WATCHDOG_TIMEOUT = 0.3
 shift_active = False
@@ -60,6 +78,13 @@ alt_active = False
 ctrl_active = False
 pressed_keys = set()
 trigger_held = False
+
+# SFCコントローラー/マウスはキーボードモード・ザッパーモードどちらでも常時動作する
+# (ファミコン側とSFC側は配線・信号とも独立しているため同時利用可能)
+sfc_pressed_keys = set()
+sfc1_mouse_buttons = 0
+sfc2_mouse_buttons = 0
+sfc_last_packet_time = time.monotonic()
 
 BLINK_STEP_DURATION = 0.25
 blink_step_start = time.monotonic()
@@ -169,6 +194,7 @@ while True:
             pressed = bool(packet & 0x80)
             key_id = packet & 0x7F
             last_packet_time = time.monotonic()
+            sfc_last_packet_time = last_packet_time
 
             if key_id == 72:  # トリガー
                 if zapper_mode:
@@ -184,6 +210,45 @@ while True:
                         mouse.press(Mouse.RIGHT_BUTTON)
                     else:
                         mouse.release(Mouse.RIGHT_BUTTON)
+
+            elif SFC1_BUTTON_BASE <= key_id < SFC1_BUTTON_BASE + 12:
+                # キーボード/ザッパーのモードに関係なく常時有効
+                code = KEYMAP_SFC1[key_id - SFC1_BUTTON_BASE]
+                if pressed:
+                    kbd.press(code)
+                    sfc_pressed_keys.add(code)
+                else:
+                    kbd.release(code)
+                    sfc_pressed_keys.discard(code)
+
+            elif SFC2_BUTTON_BASE <= key_id < SFC2_BUTTON_BASE + 12:
+                code = KEYMAP_SFC2[key_id - SFC2_BUTTON_BASE]
+                if pressed:
+                    kbd.press(code)
+                    sfc_pressed_keys.add(code)
+                else:
+                    kbd.release(code)
+                    sfc_pressed_keys.discard(code)
+
+            elif key_id in (SFC1_MOUSE_ID, SFC2_MOUSE_ID):
+                # ヘッダーに続けてbuttons/dx/dyの3バイトが来る
+                payload = uart.read(3)
+                if payload and len(payload) == 3:
+                    buttons = payload[0]
+                    dx = payload[1] - 256 if payload[1] > 127 else payload[1]
+                    dy = payload[2] - 256 if payload[2] > 127 else payload[2]
+                    if dx != 0 or dy != 0:
+                        mouse.move(dx, dy, 0)
+                    if key_id == SFC1_MOUSE_ID:
+                        changed = buttons ^ sfc1_mouse_buttons
+                        sfc1_mouse_buttons = buttons
+                    else:
+                        changed = buttons ^ sfc2_mouse_buttons
+                        sfc2_mouse_buttons = buttons
+                    if changed & 0x01:
+                        (mouse.press if buttons & 0x01 else mouse.release)(Mouse.LEFT_BUTTON)
+                    if changed & 0x02:
+                        (mouse.press if buttons & 0x02 else mouse.release)(Mouse.RIGHT_BUTTON)
 
             elif not zapper_mode and key_id < len(KEYMAP):
                 code = KEYMAP[key_id]
@@ -225,6 +290,16 @@ while True:
             pressed_keys.clear()
             last_packet_time = time.monotonic()
 
+        if time.monotonic() - sfc_last_packet_time > WATCHDOG_TIMEOUT and (sfc_pressed_keys or sfc1_mouse_buttons or sfc2_mouse_buttons):
+            for c in list(sfc_pressed_keys):
+                kbd.release(c)
+            sfc_pressed_keys.clear()
+            if sfc1_mouse_buttons or sfc2_mouse_buttons:
+                mouse.release_all()
+                sfc1_mouse_buttons = 0
+                sfc2_mouse_buttons = 0
+            sfc_last_packet_time = time.monotonic()
+
         if zapper_mode:
             update_leds_zapper_mode()
         else:
@@ -235,6 +310,12 @@ while True:
         try:
             release_all_modifiers_and_keys()
             mouse.release_all()
+            for c in list(sfc_pressed_keys):
+                kbd.release(c)
+            sfc_pressed_keys.clear()
+            sfc1_mouse_buttons = 0
+            sfc2_mouse_buttons = 0
         except Exception:
             pass
         last_packet_time = time.monotonic()
+        sfc_last_packet_time = time.monotonic()

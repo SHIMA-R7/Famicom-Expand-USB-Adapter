@@ -11,6 +11,13 @@ const int D4 = 11;
 const int ZAPPER_TRIGGER = 11; // DA15 4番ピン ※D4と物理配線共用(排他利用前提)
 const int ZAPPER_SENSOR  = 10; // DA15 5番ピン ※D3と物理配線共用(排他利用前提)
 
+// SFCコントローラーポート(1P/2P)。CLOCK/LATCHは共通、DATAのみポートごと。
+const int SFC_CLOCK    = A5;
+const int SFC_LATCH    = A0;
+const int SFC_DATA_1P  = A1;
+const int SFC_DATA_2P  = A3;
+// A2(1P D1)・A4(2P D1)は標準パッド/マウスとも未使用のため未配線
+
 SoftwareSerial toPico(2, 3); // RX=D2, TX=D3(分圧経由でPico GP1へ)
 
 bool stableState[9][2][4];
@@ -21,6 +28,19 @@ const uint8_t DEBOUNCE_THRESHOLD = 2;
 
 bool lastTrigger = HIGH;
 bool lastSensor = HIGH;
+
+// SFC 1P/2Pの状態(id 74〜85=1Pボタン、86〜97=2Pボタン、98=1Pマウス、99=2Pマウス)
+const uint8_t SFC1_BUTTON_BASE = 74;
+const uint8_t SFC2_BUTTON_BASE = 86;
+const uint8_t SFC1_MOUSE_ID = 98;
+const uint8_t SFC2_MOUSE_ID = 99;
+// ボタン並び(クロック順): B, Y, Select, Start, Up, Down, Left, Right, A, X, L, R
+bool sfc1PadButtons[12] = {false};
+bool sfc2PadButtons[12] = {false};
+bool sfc1IsMouse = false;
+bool sfc2IsMouse = false;
+uint8_t sfc1MouseButtons = 0;
+uint8_t sfc2MouseButtons = 0;
 
 void writeOut(uint8_t v) {
   digitalWrite(OUT0, v & 1);
@@ -94,8 +114,103 @@ void scanZapper() {
   }
 }
 
+void sendSFCPadEvent(uint8_t baseId, int index, bool pressed) {
+  toPico.write((pressed ? 0x80 : 0x00) | (baseId + index));
+}
+
+// 32bit丸ごと読んだ後、標準パッド(先頭バイトが0以外)かマウス(先頭バイトが0x00固定+
+// シグネチャ0001)かを判定して処理する。ホットスワップにも対応(毎スキャンごとに再判定)。
+// force=trueの時は「変化なし」でも現在押されているボタンを再送する(Pico側の
+// ウォッチドッグが、押しっぱなし中に無通信と誤認して勝手に離してしまうのを防ぐため)
+void processSFCPort(uint32_t report, uint8_t buttonBaseId, uint8_t mouseId,
+                     bool &isMouse, bool padButtons[12], uint8_t &mouseButtons, bool force) {
+  uint8_t byte0 = (report >> 24) & 0xFF;
+  if (byte0 == 0x00) {
+    // マウスレポート
+    if (!isMouse) {
+      // パッドモードから切り替わった瞬間、押しっぱなしのボタンを強制解放
+      for (int i = 0; i < 12; i++) {
+        if (padButtons[i]) {
+          sendSFCPadEvent(buttonBaseId, i, false);
+          padButtons[i] = false;
+        }
+      }
+      isMouse = true;
+    }
+    uint8_t byte1 = (report >> 16) & 0xFF; // signature(0001) + sensitivity + L/R button ※ビット位置は資料により表記が割れており実機未検証
+    uint8_t byte2 = (report >> 8) & 0xFF;  // Y方向(bit7=符号, bit6-0=移動量)
+    uint8_t byte3 = report & 0xFF;         // X方向(bit7=符号, bit6-0=移動量)
+    uint8_t newButtons = 0;
+    if (byte1 & 0x02) newButtons |= 0x01; // Left  ※未検証、実機で逆なら差し替え
+    if (byte1 & 0x01) newButtons |= 0x02; // Right ※未検証、実機で逆なら差し替え
+    bool changed = (newButtons != mouseButtons);
+    if (dx_or_dy_nonzero(byte2, byte3) || changed || (force && newButtons != 0)) {
+      int8_t dy = (byte2 & 0x80) ? -(int8_t)(byte2 & 0x7F) : (int8_t)(byte2 & 0x7F);
+      int8_t dx = (byte3 & 0x80) ? -(int8_t)(byte3 & 0x7F) : (int8_t)(byte3 & 0x7F);
+      toPico.write(0x80 | mouseId);
+      toPico.write(newButtons);
+      toPico.write((uint8_t)dx);
+      toPico.write((uint8_t)dy);
+      mouseButtons = newButtons;
+    }
+  } else {
+    // 標準パッドレポート(先頭16bit: B Y Select Start Up Down Left Right | A X L R 0 0 0 0)
+    if (isMouse) {
+      // マウスモードから切り替わった瞬間、マウスボタンを強制解放
+      if (mouseButtons != 0) {
+        toPico.write(0x80 | mouseId);
+        toPico.write((uint8_t)0);
+        toPico.write((uint8_t)0);
+        toPico.write((uint8_t)0);
+        mouseButtons = 0;
+      }
+      isMouse = false;
+    }
+    uint16_t pad16 = (report >> 16) & 0xFFFF;
+    for (int i = 0; i < 12; i++) {
+      bool pressed = ((pad16 >> (15 - i)) & 0x01) == 0; // アクティブLow
+      if (pressed != padButtons[i] || (force && pressed)) {
+        sendSFCPadEvent(buttonBaseId, i, pressed);
+        padButtons[i] = pressed;
+      }
+    }
+  }
+}
+
+bool dx_or_dy_nonzero(uint8_t byte2, uint8_t byte3) {
+  return (byte2 & 0x7F) != 0 || (byte3 & 0x7F) != 0;
+}
+
+unsigned long lastSFCHeartbeat = 0;
+const unsigned long SFC_HEARTBEAT_MS = 100; // Pico側WATCHDOG_TIMEOUT(0.3s)より十分短く
+
+void scanSFC() {
+  digitalWrite(SFC_LATCH, HIGH);
+  delayMicroseconds(12);
+  digitalWrite(SFC_LATCH, LOW);
+  delayMicroseconds(6);
+
+  uint32_t report1P = 0;
+  uint32_t report2P = 0;
+  for (int i = 0; i < 32; i++) {
+    report1P = (report1P << 1) | digitalRead(SFC_DATA_1P);
+    report2P = (report2P << 1) | digitalRead(SFC_DATA_2P);
+    digitalWrite(SFC_CLOCK, LOW);
+    delayMicroseconds(6);
+    digitalWrite(SFC_CLOCK, HIGH);
+    delayMicroseconds(6);
+  }
+
+  unsigned long now = millis();
+  bool force = (now - lastSFCHeartbeat >= SFC_HEARTBEAT_MS);
+  if (force) lastSFCHeartbeat = now;
+
+  processSFCPort(report1P, SFC1_BUTTON_BASE, SFC1_MOUSE_ID, sfc1IsMouse, sfc1PadButtons, sfc1MouseButtons, force);
+  processSFCPort(report2P, SFC2_BUTTON_BASE, SFC2_MOUSE_ID, sfc2IsMouse, sfc2PadButtons, sfc2MouseButtons, force);
+}
+
 void setup() {
-  toPico.begin(9600);
+  toPico.begin(57600);
   pinMode(OUT0, OUTPUT);
   pinMode(OUT1, OUTPUT);
   pinMode(OUT2, OUTPUT);
@@ -105,10 +220,18 @@ void setup() {
   pinMode(D4, INPUT_PULLUP);
   pinMode(ZAPPER_TRIGGER, INPUT_PULLUP);
   pinMode(ZAPPER_SENSOR, INPUT_PULLUP);
+
+  pinMode(SFC_CLOCK, OUTPUT);
+  pinMode(SFC_LATCH, OUTPUT);
+  digitalWrite(SFC_CLOCK, HIGH); // アイドル時Highが実機仕様
+  digitalWrite(SFC_LATCH, LOW);
+  pinMode(SFC_DATA_1P, INPUT_PULLUP); // 未接続時は標準パッドの「ボタン全部離し」として読める
+  pinMode(SFC_DATA_2P, INPUT_PULLUP);
 }
 
 void loop() {
   scanKeyboard();
   scanZapper();
+  scanSFC();
   delay(5);
 }
