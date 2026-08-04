@@ -59,6 +59,9 @@ SFC1_BUTTON_BASE = 74
 SFC2_BUTTON_BASE = 86
 SFC1_MOUSE_ID = 98
 SFC2_MOUSE_ID = 99
+# SFCマウス純正の分解能(感度0で50カウント/インチ程度)は今どきのUSBマウスよりかなり
+# 粗いので、そのまま送ると動きが鈍く感じる。ここで倍率をかけて感度を底上げする。
+SFC_MOUSE_GAIN = 8
 
 KEYMAP_SFC1 = [
     Keycode.Z, Keycode.A, Keycode.RIGHT_SHIFT, Keycode.ENTER,
@@ -237,6 +240,8 @@ while True:
                     buttons = payload[0]
                     dx = payload[1] - 256 if payload[1] > 127 else payload[1]
                     dy = payload[2] - 256 if payload[2] > 127 else payload[2]
+                    dx = max(-127, min(127, dx * SFC_MOUSE_GAIN))
+                    dy = max(-127, min(127, dy * SFC_MOUSE_GAIN))
                     if dx != 0 or dy != 0:
                         mouse.move(dx, dy, 0)
                     if key_id == SFC1_MOUSE_ID:

@@ -118,14 +118,22 @@ void sendSFCPadEvent(uint8_t baseId, int index, bool pressed) {
   toPico.write((pressed ? 0x80 : 0x00) | (baseId + index));
 }
 
-// 32bit丸ごと読んだ後、標準パッド(先頭バイトが0以外)かマウス(先頭バイトが0x00固定+
-// シグネチャ0001)かを判定して処理する。ホットスワップにも対応(毎スキャンごとに再判定)。
+// 32bit丸ごと読んだ後、標準パッドかマウスかを判定して処理する。
+// ホットスワップにも対応(毎スキャンごとに再判定)。
+//
+// 実機解析で確定した仕様(2026-08-02):
+// - 信号線は全ビットがアクティブLowで伝送される(論理値の反転がそのまま生値になる)
+// - マウスは生のbyte1下位4bitが常に0b1110固定(論理シグネチャ0001の反転)。
+//   これはパッドの「先頭バイトが0x00かどうか」では判定できない
+//   (パッドもボタン全解放時は先頭バイトが生0xFFになり、マウスの生0xFFと衝突するため)
+// - L/Rボタンは(反転後の)byte1の上位2bit: bit7=Right、bit6=Left
 // force=trueの時は「変化なし」でも現在押されているボタンを再送する(Pico側の
 // ウォッチドッグが、押しっぱなし中に無通信と誤認して勝手に離してしまうのを防ぐため)
 void processSFCPort(uint32_t report, uint8_t buttonBaseId, uint8_t mouseId,
                      bool &isMouse, bool padButtons[12], uint8_t &mouseButtons, bool force) {
-  uint8_t byte0 = (report >> 24) & 0xFF;
-  if (byte0 == 0x00) {
+  uint8_t rawByte1 = (report >> 16) & 0xFF;
+  bool mouseReport = (rawByte1 & 0x0F) == 0x0E; // マウス固有シグネチャ(実測確定)
+  if (mouseReport) {
     // マウスレポート
     if (!isMouse) {
       // パッドモードから切り替わった瞬間、押しっぱなしのボタンを強制解放
@@ -137,12 +145,12 @@ void processSFCPort(uint32_t report, uint8_t buttonBaseId, uint8_t mouseId,
       }
       isMouse = true;
     }
-    uint8_t byte1 = (report >> 16) & 0xFF; // signature(0001) + sensitivity + L/R button ※ビット位置は資料により表記が割れており実機未検証
-    uint8_t byte2 = (report >> 8) & 0xFF;  // Y方向(bit7=符号, bit6-0=移動量)
-    uint8_t byte3 = report & 0xFF;         // X方向(bit7=符号, bit6-0=移動量)
+    uint8_t byte1 = ~rawByte1 & 0xFF;               // bit7=Right bit6=Left bit5-4=感度 bit3-0=signature(0001)
+    uint8_t byte2 = ~((report >> 8) & 0xFF) & 0xFF; // Y方向(bit7=符号, bit6-0=移動量)
+    uint8_t byte3 = ~report & 0xFF;                 // X方向(bit7=符号, bit6-0=移動量)
     uint8_t newButtons = 0;
-    if (byte1 & 0x02) newButtons |= 0x01; // Left  ※未検証、実機で逆なら差し替え
-    if (byte1 & 0x01) newButtons |= 0x02; // Right ※未検証、実機で逆なら差し替え
+    if (byte1 & 0x40) newButtons |= 0x01; // Left  (実機確認済み)
+    if (byte1 & 0x80) newButtons |= 0x02; // Right (実機確認済み)
     bool changed = (newButtons != mouseButtons);
     if (dx_or_dy_nonzero(byte2, byte3) || changed || (force && newButtons != 0)) {
       int8_t dy = (byte2 & 0x80) ? -(int8_t)(byte2 & 0x7F) : (int8_t)(byte2 & 0x7F);
@@ -233,5 +241,7 @@ void loop() {
   scanKeyboard();
   scanZapper();
   scanSFC();
-  delay(5);
+  // キーボード走査だけで約9ms(500us×18回)かかるので、末尾の待機は最小限にして
+  // SFC(クリック/移動)の応答性を上げる
+  delay(1);
 }
