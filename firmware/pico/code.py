@@ -61,7 +61,7 @@ SFC1_MOUSE_ID = 98
 SFC2_MOUSE_ID = 99
 # SFCマウス純正の分解能(感度0で50カウント/インチ程度)は今どきのUSBマウスよりかなり
 # 粗いので、そのまま送ると動きが鈍く感じる。ここで倍率をかけて感度を底上げする。
-SFC_MOUSE_GAIN = 8
+SFC_MOUSE_GAIN = 24
 
 KEYMAP_SFC1 = [
     Keycode.Z, Keycode.A, Keycode.RIGHT_SHIFT, Keycode.ENTER,
@@ -240,10 +240,17 @@ while True:
                     buttons = payload[0]
                     dx = payload[1] - 256 if payload[1] > 127 else payload[1]
                     dy = payload[2] - 256 if payload[2] > 127 else payload[2]
-                    dx = max(-127, min(127, dx * SFC_MOUSE_GAIN))
-                    dy = max(-127, min(127, dy * SFC_MOUSE_GAIN))
-                    if dx != 0 or dy != 0:
-                        mouse.move(dx, dy, 0)
+                    # 1回のHIDレポートは±127までしか送れないので、ゲインをかけた後の
+                    # 総移動量が127を超える分は複数回に分けて送る(単純にクランプすると
+                    # 速い動きが軒並み同じ最大値に潰れてカクついて見えるため)
+                    total_dx = dx * SFC_MOUSE_GAIN
+                    total_dy = dy * SFC_MOUSE_GAIN
+                    while total_dx != 0 or total_dy != 0:
+                        step_dx = max(-127, min(127, total_dx))
+                        step_dy = max(-127, min(127, total_dy))
+                        mouse.move(step_dx, step_dy, 0)
+                        total_dx -= step_dx
+                        total_dy -= step_dy
                     if key_id == SFC1_MOUSE_ID:
                         changed = buttons ^ sfc1_mouse_buttons
                         sfc1_mouse_buttons = buttons
