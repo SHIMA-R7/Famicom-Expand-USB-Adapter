@@ -61,7 +61,7 @@ SFC1_MOUSE_ID = 98
 SFC2_MOUSE_ID = 99
 # SFCマウス純正の分解能(感度0で50カウント/インチ程度)は今どきのUSBマウスよりかなり
 # 粗いので、そのまま送ると動きが鈍く感じる。ここで倍率をかけて感度を底上げする。
-SFC_MOUSE_GAIN = 24
+SFC_MOUSE_GAIN = 12
 
 KEYMAP_SFC1 = [
     Keycode.Z, Keycode.A, Keycode.RIGHT_SHIFT, Keycode.ENTER,

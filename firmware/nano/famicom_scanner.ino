@@ -97,6 +97,10 @@ void scanKeyboard() {
       processBit(row, 0, bit, (col0 >> bit) & 1);
       processBit(row, 1, bit, (col1 >> bit) & 1);
     }
+    // キーボード走査は1行ごとに待ち時間があるだけの遅い処理なので、その合間に
+    // SFC(マウス)を読んでおくと、キーボードの走査速度を落とさずにマウスの
+    // 更新頻度だけ約10倍に上げられる(カクつき対策)
+    scanSFC();
   }
   firstScan = false;
 }
