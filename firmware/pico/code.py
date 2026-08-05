@@ -61,7 +61,16 @@ SFC1_MOUSE_ID = 98
 SFC2_MOUSE_ID = 99
 # SFCマウス純正の分解能(感度0で50カウント/インチ程度)は今どきのUSBマウスよりかなり
 # 粗いので、そのまま送ると動きが鈍く感じる。ここで倍率をかけて感度を底上げする。
-SFC_MOUSE_GAIN = 12
+#
+# ただしエミュレータで本物のSFCソフト(マリオペイント等)を動かすときは話が逆になる。
+# エミュレータ側は「SFCマウス実機のカウント」を期待しているので、底上げ済みの値を
+# 渡すと二重に補正されてカーソルが吹っ飛び、まともに描けない。その用途では等倍
+# (=実機と同じ生のカウント)に戻す必要がある。
+# PC側で何が動いているかはPicoからは分からないため、左右ボタン同時長押しで手動切替。
+SFC_MOUSE_GAIN_DESKTOP = 12  # PCの普通のマウスとして使うとき
+SFC_MOUSE_GAIN_NATIVE = 1    # エミュレータでSFCマウスとして使うとき(実機同等)
+SFC_MOUSE_GAIN_HOLD = 1.0    # 切り替えに必要な同時押し時間(秒)
+SFC_GAIN_FEEDBACK = 1.2      # 切り替え後にLEDで知らせる時間(秒)
 
 KEYMAP_SFC1 = [
     Keycode.Z, Keycode.A, Keycode.RIGHT_SHIFT, Keycode.ENTER,
@@ -88,6 +97,11 @@ sfc_pressed_keys = set()
 sfc1_mouse_buttons = 0
 sfc2_mouse_buttons = 0
 sfc_last_packet_time = time.monotonic()
+
+sfc_mouse_gain = SFC_MOUSE_GAIN_DESKTOP
+sfc_both_since = None       # 左右同時押しが始まった時刻(Noneなら同時押し中でない)
+sfc_gain_toggled = False    # この同時押しで既に切り替え済みか(1回の長押しで1回だけ)
+gain_feedback_until = 0.0   # この時刻まではLEDに現在の倍率を表示する
 
 BLINK_STEP_DURATION = 0.25
 blink_step_start = time.monotonic()
@@ -174,6 +188,17 @@ def update_leds_zapper_mode():
             led.value = (i == zapper_anim_index)
 
 
+def update_leds_gain_feedback():
+    """マウス倍率を切り替えた直後、どちらになったかをLEDで知らせる。
+
+    等倍(エミュ用)は1個だけ点灯、12倍(デスクトップ用)は4個全点灯。
+    キーボード/ザッパー用のLED更新より優先して呼ぶ。
+    """
+    native = (sfc_mouse_gain == SFC_MOUSE_GAIN_NATIVE)
+    for i, led in enumerate(ZAPPER_ANIM_LEDS):
+        led.value = True if not native else (i == 0)
+
+
 print("keyboard/zapper bridge start")
 
 while True:
@@ -243,8 +268,8 @@ while True:
                     # 1回のHIDレポートは±127までしか送れないので、ゲインをかけた後の
                     # 総移動量が127を超える分は複数回に分けて送る(単純にクランプすると
                     # 速い動きが軒並み同じ最大値に潰れてカクついて見えるため)
-                    total_dx = dx * SFC_MOUSE_GAIN
-                    total_dy = dy * SFC_MOUSE_GAIN
+                    total_dx = dx * sfc_mouse_gain
+                    total_dy = dy * sfc_mouse_gain
                     while total_dx != 0 or total_dy != 0:
                         step_dx = max(-127, min(127, total_dx))
                         step_dy = max(-127, min(127, total_dy))
@@ -261,6 +286,23 @@ while True:
                         (mouse.press if buttons & 0x01 else mouse.release)(Mouse.LEFT_BUTTON)
                     if changed & 0x02:
                         (mouse.press if buttons & 0x02 else mouse.release)(Mouse.RIGHT_BUTTON)
+
+                    # 左右同時長押しでデスクトップ用(12倍)とエミュ用(等倍)を切り替える。
+                    # PC側の状況はPicoから見えないので、切り替えは手動でしかできない。
+                    if buttons & 0x03 == 0x03:
+                        if sfc_both_since is None:
+                            sfc_both_since = time.monotonic()
+                        elif (not sfc_gain_toggled
+                              and time.monotonic() - sfc_both_since >= SFC_MOUSE_GAIN_HOLD):
+                            sfc_mouse_gain = (SFC_MOUSE_GAIN_NATIVE
+                                              if sfc_mouse_gain == SFC_MOUSE_GAIN_DESKTOP
+                                              else SFC_MOUSE_GAIN_DESKTOP)
+                            sfc_gain_toggled = True
+                            gain_feedback_until = time.monotonic() + SFC_GAIN_FEEDBACK
+                            print("SFC mouse gain ->", sfc_mouse_gain)
+                    else:
+                        sfc_both_since = None
+                        sfc_gain_toggled = False
 
             elif not zapper_mode and key_id < len(KEYMAP):
                 code = KEYMAP[key_id]
@@ -312,7 +354,9 @@ while True:
                 sfc2_mouse_buttons = 0
             sfc_last_packet_time = time.monotonic()
 
-        if zapper_mode:
+        if time.monotonic() < gain_feedback_until:
+            update_leds_gain_feedback()
+        elif zapper_mode:
             update_leds_zapper_mode()
         else:
             update_leds_keyboard_mode()
