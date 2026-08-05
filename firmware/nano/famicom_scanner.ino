@@ -37,6 +37,12 @@ const uint8_t SFC2_MOUSE_ID = 99;
 // ボタン並び(クロック順): B, Y, Select, Start, Up, Down, Left, Right, A, X, L, R
 bool sfc1PadButtons[12] = {false};
 bool sfc2PadButtons[12] = {false};
+// SFCボタンのデバウンス用(キーボード側と同じ考え方)。SELECT(右Shift)がチャタリングで
+// 連打扱いされ、Windowsの固定キー機能(Sticky Keys)を誤爆させたため追加した。
+bool sfc1PadCandidate[12] = {false};
+uint8_t sfc1PadCandidateCount[12] = {0};
+bool sfc2PadCandidate[12] = {false};
+uint8_t sfc2PadCandidateCount[12] = {0};
 bool sfc1IsMouse = false;
 bool sfc2IsMouse = false;
 uint8_t sfc1MouseButtons = 0;
@@ -134,7 +140,8 @@ void sendSFCPadEvent(uint8_t baseId, int index, bool pressed) {
 // force=trueの時は「変化なし」でも現在押されているボタンを再送する(Pico側の
 // ウォッチドッグが、押しっぱなし中に無通信と誤認して勝手に離してしまうのを防ぐため)
 void processSFCPort(uint32_t report, uint8_t buttonBaseId, uint8_t mouseId,
-                     bool &isMouse, bool padButtons[12], uint8_t &mouseButtons, bool force) {
+                     bool &isMouse, bool padButtons[12], uint8_t &mouseButtons, bool force,
+                     bool padCandidate[12], uint8_t padCandidateCount[12]) {
   uint8_t rawByte1 = (report >> 16) & 0xFF;
   bool mouseReport = (rawByte1 & 0x0F) == 0x0E; // マウス固有シグネチャ(実測確定)
   if (mouseReport) {
@@ -180,7 +187,20 @@ void processSFCPort(uint32_t report, uint8_t buttonBaseId, uint8_t mouseId,
     }
     uint16_t pad16 = (report >> 16) & 0xFFFF;
     for (int i = 0; i < 12; i++) {
-      bool pressed = ((pad16 >> (15 - i)) & 0x01) == 0; // アクティブLow
+      bool rawOn = ((pad16 >> (15 - i)) & 0x01) == 0; // アクティブLow
+      // デバウンス: 生の読み値がN回連続で一致するまでは確定状態を変えない
+      // (チャタリングがそのままキー連打として送られ、SELECT=右ShiftでWindowsの
+      // 固定キー機能を誤爆させていたため追加)
+      if (rawOn == padCandidate[i]) {
+        if (padCandidateCount[i] < 255) padCandidateCount[i]++;
+      } else {
+        padCandidate[i] = rawOn;
+        padCandidateCount[i] = 1;
+      }
+      bool pressed = padButtons[i];
+      if (padCandidateCount[i] >= DEBOUNCE_THRESHOLD) {
+        pressed = rawOn;
+      }
       if (pressed != padButtons[i] || (force && pressed)) {
         sendSFCPadEvent(buttonBaseId, i, pressed);
         padButtons[i] = pressed;
@@ -217,8 +237,10 @@ void scanSFC() {
   bool force = (now - lastSFCHeartbeat >= SFC_HEARTBEAT_MS);
   if (force) lastSFCHeartbeat = now;
 
-  processSFCPort(report1P, SFC1_BUTTON_BASE, SFC1_MOUSE_ID, sfc1IsMouse, sfc1PadButtons, sfc1MouseButtons, force);
-  processSFCPort(report2P, SFC2_BUTTON_BASE, SFC2_MOUSE_ID, sfc2IsMouse, sfc2PadButtons, sfc2MouseButtons, force);
+  processSFCPort(report1P, SFC1_BUTTON_BASE, SFC1_MOUSE_ID, sfc1IsMouse, sfc1PadButtons, sfc1MouseButtons, force,
+                 sfc1PadCandidate, sfc1PadCandidateCount);
+  processSFCPort(report2P, SFC2_BUTTON_BASE, SFC2_MOUSE_ID, sfc2IsMouse, sfc2PadButtons, sfc2MouseButtons, force,
+                 sfc2PadCandidate, sfc2PadCandidateCount);
 }
 
 void setup() {
